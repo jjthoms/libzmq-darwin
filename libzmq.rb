@@ -8,23 +8,21 @@
 require 'fileutils'
 
 # ZeroMQ release version
-PKG_VER="4.2.1"
+PKG_VER="4.1.7"
 
 # Minimum platform versions
-IOS_VERSION_MIN         = "9.0"
-MACOS_VERSION_MIN       = "10.11"
-TVOS_VERSION_MIN        = "9.0"
-WATCHOS_VERSION_MIN     = "2.0"
+IOS_VERSION_MIN         = "11.0"
+MACOS_VERSION_MIN       = "10.13"
+TVOS_VERSION_MIN        = "11.0"
 
 
 LIBNAME="libzmq.a"
 ROOTDIR=File.absolute_path(File.dirname(__FILE__))
 LIBSODIUM_DIST=File.join(ROOTDIR, "dist")
 VALID_ARHS_PER_PLATFORM = {
-  "iOS"     => ["armv7", "armv7s", "arm64", "i386", "x86_64"],
+  "iOS"     => ["arm64", "x86_64"],
   "macOS"   => ["x86_64"],
   "tvOS"    => ["arm64", "x86_64"],
-  "watchOS" => ["armv7k", "i386"],
 }
 
 DEVELOPER               = `xcode-select -print-path`.chomp
@@ -51,8 +49,6 @@ def find_sdks
       sdk_versions["macOS"]   = $1
     elsif line =~ /-sdk appletvos(\S+)/
       sdk_versions["tvOS"]    = $1
-    elsif line =~ /-sdk watchos(\S+)/
-      sdk_versions["watchOS"] = $1
     end
   end
   return sdk_versions
@@ -62,11 +58,9 @@ sdk_versions            = find_sdks()
 IOS_SDK_VERSION         = sdk_versions["iOS"]
 MACOS_SDK_VERSION       = sdk_versions["macOS"]
 TVOS_SDK_VERSION        = sdk_versions["tvOS"]
-WATCHOS_SDK_VERSION     = sdk_versions["watchOS"]
 
 puts "iOS     SDK version = #{IOS_SDK_VERSION}"
 puts "macOS   SDK version = #{MACOS_SDK_VERSION}"
-puts "watchOS SDK version = #{WATCHOS_SDK_VERSION}"
 puts "tvOS    SDK version = #{TVOS_SDK_VERSION}"
 
 # Enable Bitcode
@@ -88,7 +82,7 @@ def download_and_extract_libzeromq()
   puts "Downloading latest stable release of 'zeromq'"
   pkg_name      = "zeromq-#{PKG_VER}"
   pkg           = "#{pkg_name}.tar.gz"
-  url           = "https://github.com/zeromq/libzmq/releases/download/v#{PKG_VER}/#{pkg}"
+  url           = "https://github.com/zeromq/zeromq4-1/releases/download/v#{PKG_VER}/#{pkg}"
   exit 1 unless system("cd #{BUILDDIR} && curl -O -L #{url}")
   exit 1 unless system("cd #{BUILDDIR} && tar xzf #{pkg}")
   FileUtils.mv "#{BUILDDIR}/#{pkg_name}", "build/zeromq"
@@ -258,12 +252,9 @@ for platform in PLATFORMS
     ]
     exit 1 unless system(configure_cmd.join(" "))
 
-    # Workaround to disable clock_gettime since it is only available on iOS 10+
-    FileUtils.cp "#{SCRIPTDIR}/platform-patched.hpp", "#{BUILDDIR}/zeromq/src/platform.hpp"
-
     puts "Building for #{build_type}..."
     exit 1 unless system("make clean")
-    exit 1 unless system("make -j8 V=0")
+    exit 1 unless system("make -j V=0")
     exit 1 unless system("make install")
 
     # Add to the architecture-dependent library list for the current platform
