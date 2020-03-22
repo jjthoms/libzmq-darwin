@@ -11,8 +11,8 @@ require 'fileutils'
 PKG_VER="4.1.7"
 
 # Minimum platform versions
-IOS_VERSION_MIN         = "11.0"
-MACOS_VERSION_MIN       = "10.13"
+IOS_VERSION_MIN         = "12.0"
+MACOS_VERSION_MIN       = "10.14"
 #TVOS_VERSION_MIN        = "11.0"
 
 
